@@ -34,6 +34,7 @@ final static int OPNAME = 1005;
 final static int LITERAL = 1006;
 final static int RETURN = 1007;
 final static int WHILE = 1008;
+final static int VAR = 1009;
 
 
 // A variable that will contain lexemes as they are recognized:
@@ -102,6 +103,10 @@ _OPNAME=[\+\-*/!%=><\:\^\~&|?]
 "return" {
 	lexeme = yytext();
 	return RETURN;
+}
+"var" {
+	lexeme = yytext();
+	return VAR;
 }
 
 {_NAME} {
