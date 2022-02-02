@@ -1,0 +1,56 @@
+# NanoMorpho prófunarforrit.
+# Höfundur: Jón Gunnar Hannesson, janúar 2022.
+
+# Notkun: (fibo n)
+# Fyrir:  n er heiltala, n>=0
+# Gildi:  n-ta Fibonacci talan
+fibo(n){
+  if(n == 1 ){
+    return 1;
+  }
+  elsif(n < 1){
+    return 1;
+  }
+  else{
+    return fibo(n-1) + fibo(n-2);
+  }
+}
+
+# Notkun: (main)
+# Fyrir:  Ekkert
+# Eftir:  Búið er að reikna og skrifa fibo(30)
+main(){
+  writeln("fibo(30)=" fibo(30));
+}
+
+
+while
+
+[]$;.,
+����
+����
+������
+������
+'
+'  '
+'xx'
+'x'
+!%&/=-?^+*~<>|
+`
+�
+�
+�
+�
+�
+�
+�
+�
+�
+�Lisp
+'\\'
+"\r\n"
+'\r\n'
+'\013'
+'\f'
+'\''
+'''
