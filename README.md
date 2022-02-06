@@ -1,6 +1,4 @@
-# jgh_lexer
-Lesgreinir á la Jón Gunnar
-
+# Lexer
 JFLex lesgreinir fyrir NanoMorpho byggt á dæmi um NanoLisp lesgreini eftir Snorra Agnarsson.
 
 Einnig fylgir test.nm skrá til að prófa lesgreininn. Sjá [leiðbeiningar](#build-and-run-instructions) að neðan.
@@ -17,7 +15,8 @@ Tókar eru skilgreindir með heiltölum:
 * LITERAL = 1006
 * RETURN = 1007
 * WHILE = 1008
-
+* VAR = 1009
+  
 ## Build and run instructions
 This stand-alone scanner/lexical analyzer can be built and run using:
 ```
