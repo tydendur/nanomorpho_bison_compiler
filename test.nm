@@ -1,56 +1,44 @@
-# NanoMorpho prófunarforrit.
-# Höfundur: Jón Gunnar Hannesson, janúar 2022.
-
-# Notkun: (fibo n)
-# Fyrir:  n er heiltala, n>=0
-# Gildi:  n-ta Fibonacci talan
-fibo(n){
-  if(n == 1 ){
-    return 1;
-  }
-  elsif(n < 1){
-    return 1;
-  }
-  else{
-    return fibo(n-1) + fibo(n-2);
-  }
+;;; Notkun: x = fibo(n);
+;;; Fyrir:  n er heiltala, 0 <= n.
+;;; Eftir:  x er n-ta Fibonacci talan.
+fibo(n)
+{
+	var i,f1,f2,tmp;
+	f1 = 1;
+	f2 = 1;
+	i = 0;
+	while( i!=n )
+	{
+		;;; 0 <= i <= n.
+		;;; f1 er i-ta Fibonacci talan.
+		;;; f2 er (i+1)-ta Fibonacci talan.
+		tmp = f1+f2;
+		f1 = f2;
+		f2 = tmp;
+		i = i+1;
+	};
+	f1;
 }
 
-# Notkun: (main)
-# Fyrir:  Ekkert
-# Eftir:  Búið er að reikna og skrifa fibo(30)
-main(){
-  writeln("fibo(30)=" fibo(30));
+;;; Notkun: x = f(n);
+;;; Fyrir:  n er heiltala, 0 <= n.
+;;; Eftir:  x er n-ta Fibonacci talan.
+f(n)
+{
+	if( n<2 )
+	{
+		1;
+	}
+	else
+	{
+		f(n-1)+f(n-2);
+	};
 }
 
-
-while
-
-[]$;.,
-şæöğ
-ŞÆÖĞ
-áéíóúı
-ÁÉÍÓÚİ
-'
-'  '
-'xx'
-'x'
-!%&/=-?^+*~<>|
-`
-´
-€
-ä
-ÿ
-å
-Ä
-ü
-Ü
-à
-µLisp
-'\\'
-"\r\n"
-'\r\n'
-'\013'
-'\f'
-'\''
-'''
+main()
+{
+	writeln(1:2:3:null);
+	writeln("fibo(35)="++fibo(35));
+	writeln("fibo(35)="++f(35));
+	writeln(1==2);
+}
