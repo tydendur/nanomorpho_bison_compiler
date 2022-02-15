@@ -1,6 +1,6 @@
-;;; Notkun: x = fibo(n);
-;;; Fyrir:  n er heiltala, 0 <= n.
-;;; Eftir:  x er n-ta Fibonacci talan.
+# Notkun: x = fibo(n);
+# Fyrir:  n er heiltala, 0 <= n.
+# Eftir:  x er n-ta Fibonacci talan.
 fibo(n)
 {
 	var i,f1,f2,tmp;
@@ -9,9 +9,9 @@ fibo(n)
 	i = 0;
 	while( i!=n )
 	{
-		;;; 0 <= i <= n.
-		;;; f1 er i-ta Fibonacci talan.
-		;;; f2 er (i+1)-ta Fibonacci talan.
+		# 0 <= i <= n.
+		# f1 er i-ta Fibonacci talan.
+		# f2 er (i+1)-ta Fibonacci talan.
 		tmp = f1+f2;
 		f1 = f2;
 		f2 = tmp;
@@ -20,9 +20,9 @@ fibo(n)
 	f1;
 }
 
-;;; Notkun: x = f(n);
-;;; Fyrir:  n er heiltala, 0 <= n.
-;;; Eftir:  x er n-ta Fibonacci talan.
+# Notkun: x = f(n);
+# Fyrir:  n er heiltala, 0 <= n.
+# Eftir:  x er n-ta Fibonacci talan.
 f(n)
 {
 	if( n<2 )

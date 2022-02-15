@@ -21,35 +21,122 @@ import java.io.*;
 
 %{
 
-// This part becomes a verbatim part of the program text inside
-// the class, NanoLexer.java, that is generated.
+private static String lexeme1;
+private static String lexeme2;
+private static int token1;
+private static int token2;
+private static NanoLexer lexer;
+private static int line1, column1, line2, column2;
 
-// Definitions of tokens:
-final static int ERROR = -1;
-final static int IF = 1001;
-final static int ELSIF = 1002;
-final static int ELSE = 1003;
-final static int NAME = 1004;
-final static int OPNAME = 1005;
-final static int LITERAL = 1006;
-final static int RETURN = 1007;
-final static int WHILE = 1008;
-final static int VAR = 1009;
-
-
-// A variable that will contain lexemes as they are recognized:
-private static String lexeme;
-
-// This runs the scanner:
-public static void main( String[] args ) throws Exception
+public static void startLexer( String filename ) throws Exception
 {
-	NanoLexer lexer = new NanoLexer(new FileReader(args[0]));
-	int token = lexer.yylex();
-	while( token!=0 )
+	startLexer(new FileReader(filename));
+}
+
+public static void startLexer( Reader r ) throws Exception
+{
+	lexer = new NanoLexer(r);
+	token2 = lexer.yylex();
+	line2 = lexer.yyline;
+	column2 = lexer.yycolumn;
+	advance();
+}
+
+public static String advance() throws Exception
+{
+	String res = lexeme1;
+	token1 = token2;
+	lexeme1 = lexeme2;
+	line1 = line2;
+	column1 = column2;
+	if( token2==0 ) return res;
+	token2 = lexer.yylex();
+	line2 = lexer.yyline;
+	column2 = lexer.yycolumn;
+	return res;
+}
+
+public static int getLine()
+{
+	return line1+1;
+}
+
+public static int getColumn()
+{
+	return column1+1;
+}
+
+public static int getToken1()
+{
+	return token1;
+}
+
+public static int getToken2()
+{
+	return token2;
+}
+
+public static String getLexeme()
+{
+	return lexeme1;
+}
+
+private static void expected( int tok )
+{
+	expected(tokname(tok));
+}
+
+private static void expected( char tok )
+{
+	expected("'"+tok+"'");
+}
+
+public static void expected( String tok )
+{
+	throw new Error("Expected "+tok+", found '"+lexeme1+"' near line "+(line1+1)+", column "+(column1+1));
+}
+
+private static String tokname( int tok )
+{
+	if( tok<1000 ) return ""+(char)tok;
+	switch( tok )
 	{
-		System.out.println(""+token+": \'"+lexeme+"\'");
-		token = lexer.yylex();
+	case NanoParser.IF:
+		return "if";
+	case NanoParser.ELSE:
+		return "else";
+	case NanoParser.ELSIF:
+		return "elsif";
+	case NanoParser.WHILE:
+		return "while";
+	case NanoParser.VAR:
+		return "var";
+	case NanoParser.RETURN:
+		return "return";
+	case NanoParser.NAME:
+		return "name";
+	case NanoParser.OPNAME:
+		return "operation";
+	case NanoParser.LITERAL:
+		return "literal";
 	}
+	throw new Error();
+}
+
+public static String over( int tok ) throws Exception
+{
+	if( token1!=tok ) expected(tok);
+	String res = lexeme1;
+	advance();
+	return res;
+}
+
+public static String over( char tok ) throws Exception
+{
+	if( token1!=tok ) expected(tok);
+	String res = lexeme1;
+	advance();
+	return res;
 }
 
 %}
@@ -73,50 +160,50 @@ _OPNAME=[\+\-*/!%=><\:\^\~&|?]
   /* Scanning rules */
 
 {_DELIM} {
-	lexeme = yytext();
+	lexeme2 = yytext();
 	return yycharat(0);
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-	lexeme = yytext();
-	return LITERAL;
+	lexeme2 = yytext();
+	return NanoParser.LITERAL;
 }
 
 "if" {
-	lexeme = yytext();
-	return IF;
+	lexeme2 = yytext();
+	return NanoParser.IF;
 }
 
 "elsif" {
-	lexeme = yytext();
-	return ELSIF;
+	lexeme2 = yytext();
+	return NanoParser.ELSIF;
 }
 
 "else" {
-	lexeme = yytext();
-	return ELSE;
+	lexeme2 = yytext();
+	return NanoParser.ELSE;
 }
 "while" {
-	lexeme = yytext();
-	return WHILE;
+	lexeme2 = yytext();
+	return NanoParser.WHILE;
 }
 "return" {
-	lexeme = yytext();
-	return RETURN;
+	lexeme2 = yytext();
+	return NanoParser.RETURN;
 }
 "var" {
-	lexeme = yytext();
-	return VAR;
+	lexeme2 = yytext();
+	return NanoParser.VAR;
 }
 
 {_NAME} {
-	lexeme = yytext();
-	return NAME;
+	lexeme2 = yytext();
+	return NanoParser.NAME;
 }
 
 {_OPNAME} {
-	lexeme = yytext();
-	return OPNAME;
+	lexeme2 = yytext();
+	return NanoParser.OPNAME;
 }
 
   /* Comments start with a pound sign. */
@@ -127,6 +214,6 @@ _OPNAME=[\+\-*/!%=><\:\^\~&|?]
 }
 
 . {
-	lexeme = yytext();
-	return ERROR;
+	lexeme2 = yytext();
+	return NanoParser.ERROR;
 }

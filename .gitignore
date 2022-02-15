@@ -1,4 +1,4 @@
-NanoLexer.class
-NanoLexer.java*
+*.class
+*.java*
 TODO.md
 *.zip
