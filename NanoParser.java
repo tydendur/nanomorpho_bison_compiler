@@ -1,5 +1,5 @@
 import java.util.Vector;
-
+import java.util.HashMap;
 // Höfundur: Jon Gunnar Hannesson & Tristan Freyr Jonsson, 2017-2022
 
 public class NanoParser {
@@ -112,14 +112,14 @@ public class NanoParser {
             return smallexpr();
         } else if (pri == 2) {
             Object[] e = binopexpr(3);
-            if (getToken() == OPNAME && priority(NanoMorphoLexer.getLexeme()) == 2) {
+            if (getToken1() == OPNAME && priority(getLexeme()) == 2) {
                 String op = advance();
                 e = new Object[] { "CALL", op, new Object[] { e, binopexpr(2) } };
             }
             return e;
         } else {
             Object[] e = binopexpr(pri + 1);
-            while (getToken() == OPNAME && priority(NanoMorphoLexer.getLexeme()) == pri) {
+            while (getToken1() == OPNAME && priority(getLexeme()) == pri) {
                 String op = advance();
                 e = new Object[] { "CALL", op, new Object[] { e, binopexpr(pri + 1) } };
             }
@@ -311,12 +311,80 @@ public class NanoParser {
             case "LITERAL": {
                 System.out.println("(MakeVal " + (String) e[1] + ")");
             }
+            case "CALL": {
+                Object[][] args = (Object[][]) (e[2]);
+                int n = args.length;
+                generateExpr(args[0]);
+                for (int i = 1; i < n; i++) {
+                    System.out.println("(Push)");
+                    generateExpr(args[i]);
+                }
+                System.out.println("(Call \"" + (String) e[1] + "[f" + n + "]\" " + n + ")");
+            }
+            case "FETCH": {
+                System.out.println("(Fetch " + (int) e[1] + ")");
+            }
+            case "STORE": {
+                generateExpr((Object[]) e[2]);
+                System.out.println("(Store " + (int) e[1] + ")");
+            }
+            case "RETURN": {
+                Object[] expr = (Object[]) e[1];
+
+                switch ((String) expr[0]) {
+                    case "CALL": {
+                        Object[][] args = (Object[][]) (expr[2]);
+                        int n = args.length;
+                        generateExpr(args[0]);
+                        for (int i = 1; i < n; i++) {
+                            System.out.println("(Push)");
+                            generateExpr(args[i]);
+                        }
+                        System.out.println("(CallR \"" + (String) expr[1] + "[f" + n + "]\" " + n + ")");
+                        break;
+                    }
+                    case "FETCH": {
+                        System.out.println("(FetchR " + (int) expr[1] + ")");
+                        break;
+                    }
+                    case "LITERAL": {
+                        System.out.println("(MakeValR " + (String) expr[1] + ")");
+                        break;
+                    }
+                    default: {
+                        generateExpr(expr);
+                        System.out.println("(Return)");
+                    }
+                }
+            }
+            case "BODY": {
+                generateBody((Object[]) e[1]);
+            }
+            case "IF1": {
+                String lab = newLabel();
+                generateExpr((Object[]) e[1]);
+                System.out.println("(GoFalse " + lab + ")");
+                generateExpr((Object[]) e[2]);
+                System.out.println(lab + ":");
+            }
+            case "IF2": {
+                String elselab = newLabel();
+                String endlab = newLabel();
+                generateExpr((Object[]) e[1]);
+                System.out.println("(GoFalse " + elselab + ")");
+                generateExpr((Object[]) e[2]);
+                System.out.println("(Go " + endlab + ")");
+                System.out.println(elselab + ":");
+                generateExpr((Object[]) e[3]);
+                System.out.println(endlab + ":");
+            }
         }
     }
 
-    static void generateBody( Object[] bod )
-    {
-		...
+    static void generateBody(Object[] bod) {
+        for (Object e : bod) {
+            generateExpr((Object[]) e);
+        }
     }
 
     static public void main(String[] args) throws Exception {
