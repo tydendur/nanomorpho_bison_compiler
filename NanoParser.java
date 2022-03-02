@@ -39,14 +39,6 @@ public class NanoParser {
         return NanoLexer.getToken2();
     }
 
-    private static int getLine() {
-        return NanoLexer.getLine();
-    }
-
-    private static int getColumn() {
-        return NanoLexer.getColumn();
-    }
-
     private static Vector<Object[]> program() throws Exception {
         Vector<Object[]> retVal = new Vector<Object[]>();
         retVal.add(function());
