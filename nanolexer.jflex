@@ -103,23 +103,23 @@ private static String tokname( int tok )
 	if( tok<1000 ) return ""+(char)tok;
 	switch( tok )
 	{
-	case NanoParser.IF:
+	case NanoCompiler.IF:
 		return "if";
-	case NanoParser.ELSE:
+	case NanoCompiler.ELSE:
 		return "else";
-	case NanoParser.ELSIF:
+	case NanoCompiler.ELSIF:
 		return "elsif";
-	case NanoParser.WHILE:
+	case NanoCompiler.WHILE:
 		return "while";
-	case NanoParser.VAR:
+	case NanoCompiler.VAR:
 		return "var";
-	case NanoParser.RETURN:
+	case NanoCompiler.RETURN:
 		return "return";
-	case NanoParser.NAME:
+	case NanoCompiler.NAME:
 		return "name";
-	case NanoParser.OPNAME:
+	case NanoCompiler.OPNAME:
 		return "operation";
-	case NanoParser.LITERAL:
+	case NanoCompiler.LITERAL:
 		return "literal";
 	}
 	throw new Error();
@@ -168,44 +168,44 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
 	lexeme2 = yytext();
-	return NanoParser.LITERAL;
+	return NanoCompiler.LITERAL;
 }
 
 "if" {
 	lexeme2 = yytext();
-	return NanoParser.IF;
+	return NanoCompiler.IF;
 }
 
 "elsif" {
 	lexeme2 = yytext();
-	return NanoParser.ELSIF;
+	return NanoCompiler.ELSIF;
 }
 
 "else" {
 	lexeme2 = yytext();
-	return NanoParser.ELSE;
+	return NanoCompiler.ELSE;
 }
 "while" {
 	lexeme2 = yytext();
-	return NanoParser.WHILE;
+	return NanoCompiler.WHILE;
 }
 "return" {
 	lexeme2 = yytext();
-	return NanoParser.RETURN;
+	return NanoCompiler.RETURN;
 }
 "var" {
 	lexeme2 = yytext();
-	return NanoParser.VAR;
+	return NanoCompiler.VAR;
 }
 
 {_NAME} {
 	lexeme2 = yytext();
-	return NanoParser.NAME;
+	return NanoCompiler.NAME;
 }
 
 {_OPNAME} {
 	lexeme2 = yytext();
-	return NanoParser.OPNAME;
+	return NanoCompiler.OPNAME;
 }
 
   /* Comments start with a pound sign. */
@@ -217,5 +217,5 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 
 . {
 	lexeme2 = yytext();
-	return NanoParser.ERROR;
+	return NanoCompiler.ERROR;
 }
