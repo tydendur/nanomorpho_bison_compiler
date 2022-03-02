@@ -1,3 +1,5 @@
+import java.util.Vector;
+
 // Höfundur: Jon Gunnar Hannesson & Tristan Freyr Jonsson, 2017-2022
 
 public class NanoParser {
@@ -156,29 +158,53 @@ public class NanoParser {
         body();
     }
 
-    private static void ifexpr() throws Exception {
+    private static Object[] ifexpr() throws Exception {
         over(IF);
         over('(');
-        expr();
+        Object[] cond = expr();
         over(')');
-        body();
+        Object[] then = body();
         if (getToken1() == ELSE) {
             over(ELSE);
             // ATHUGA HVERNIG ENDA SKAL IF SETNINGAR
             if (getToken1() == IF) {
-                ifexpr();
+                return new Object[] { "IF2", cond, then, ifexpr() };
             }
-            body();
+            return new Object[] { "IF2", cond, then, body() };
         }
+        return new Object[] { "IF1", cond, then };
     }
 
-    private static void body() throws Exception {
+    private static Object[] body() throws Exception {
         over('{');
+        Vector<Object> bod = new Vector<Object>();
         while (getToken1() != '}') {
-            expr();
+            bod.add(expr());
             over(';');
         }
         over('}');
+        return new Object[] { "BODY", bod };
+    }
+
+    // The symbol table consists of the following two variables.
+    private static int varCount;
+    private static HashMap<String, Integer> varTable;
+
+    // Adds a new variable to the symbol table.
+    // Throws Error if the variable already exists.
+    private static void addVar(String name) {
+        if (varTable.get(name) != null)
+            throw new Error("Variable " + name + " already exists");
+        varTable.put(name, varCount++);
+    }
+
+    // Finds the location of an existing variable.
+    // Throws Error if the variable does not exist.
+    private static int findVar(String name) {
+        Integer res = varTable.get(name);
+        if (res == null)
+            throw new Error("Variable " + name + " does not exist");
+        return res;
     }
 
     static public void main(String[] args) throws Exception {
