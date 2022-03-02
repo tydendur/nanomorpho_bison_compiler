@@ -47,115 +47,160 @@ public class NanoParser {
         return NanoLexer.getColumn();
     }
 
-    private static void program() throws Exception {
-        function();
+    private static Vector<Object[]> program() throws Exception {
+        Vector<Object[]> retVal = new Vector<Object[]>();
+        retVal.add(function());
         while (getToken1() != 0) {
-            function();
+            retVal.add(function());
         }
+        return retVal;
     }
 
-    private static void function() throws Exception {
-        over(NAME);
+    private static Object[] function() throws Exception {
+        varCount = 0;
+        varTable = new HashMap<String, Integer>();
+        String name = over(NAME);
         over('(');
         if (getToken1() == NAME) {
-            over(NAME);
+            addVar(over(NAME));
             while (getToken1() == ',') {
                 advance();
-                over(NAME);
+                addVar(over(NAME));
             }
         }
         over(')');
+        int parCount = varCount;
         over('{');
         while (getToken1() == VAR) {
             decl();
             over(';');
         }
+        Vector<Object[]> exprVec = new Vector<Object[]>();
+
         while (getToken1() != '}') {
-            expr();
+            exprVec.add(expr());
             over(';');
         }
         over('}');
+        return new Object[] { name, parCount, varCount - parCount, exprVec.toArray() };
     }
 
     private static void decl() throws Exception {
         over(VAR);
-        over(NAME);
+        addVar(over(NAME));
         while (getToken1() == ',') {
             advance();
-            over(NAME);
+            addVar(over(NAME));
         }
     }
 
-    private static void expr() throws Exception {
+    private static Object[] expr() throws Exception {
         if (getToken1() == RETURN) {
             advance();
-            expr();
-            return;
+            return new Object[] { "RETURN", expr() };
         }
         if (getToken1() == NAME && getToken2() == '=') {
+            int pos = findVar(advance());
             advance();
-            advance();
-            expr();
-            return;
+            return new Object[] { "STORE", pos, expr() };
         }
-        binopexpr();
+        return binopexpr(1);
     }
 
-    private static void binopexpr() throws Exception {
-        smallexpr();
-        while (getToken1() == OPNAME) {
-            over(OPNAME);
-            smallexpr();
+    static Object[] binopexpr(int pri) throws Exception {
+        if (pri > 7) {
+            return smallexpr();
+        } else if (pri == 2) {
+            Object[] e = binopexpr(3);
+            if (getToken() == OPNAME && priority(NanoMorphoLexer.getLexeme()) == 2) {
+                String op = advance();
+                e = new Object[] { "CALL", op, new Object[] { e, binopexpr(2) } };
+            }
+            return e;
+        } else {
+            Object[] e = binopexpr(pri + 1);
+            while (getToken() == OPNAME && priority(NanoMorphoLexer.getLexeme()) == pri) {
+                String op = advance();
+                e = new Object[] { "CALL", op, new Object[] { e, binopexpr(pri + 1) } };
+            }
+            return e;
         }
     }
 
-    private static void smallexpr() throws Exception {
+    static int priority(String opname) {
+        switch (opname.charAt(0)) {
+            case '^':
+            case '?':
+            case '~':
+                return 1;
+            case ':':
+                return 2;
+            case '|':
+                return 3;
+            case '&':
+                return 4;
+            case '!':
+            case '=':
+            case '<':
+            case '>':
+                return 5;
+            case '+':
+            case '-':
+                return 6;
+            case '*':
+            case '/':
+            case '%':
+                return 7;
+            default:
+                throw new Error("Invalid opname");
+        }
+    }
+
+    private static Object[] smallexpr() throws Exception {
         if (getToken1() == NAME && getToken2() == '(') {
+            String name = advance();
             advance();
-            advance();
+            Vector<Object[]> args = new Vector<Object[]>();
             if (getToken1() != ')') {
-                expr();
+                args.add(expr());
                 while (getToken1() == ',') {
                     advance();
-                    expr();
+                    args.add(expr());
                 }
             }
             over(')');
-            return;
+            return new Object[] { "CALL", name, args.toArray() };
         }
         if (getToken1() == NAME) {
-            over(NAME);
-            return;
+            int pos = findVar(over(NAME));
+            return new Object[] { "FETCH", pos };
         }
         if (getToken1() == OPNAME) {
-            advance();
-            smallexpr();
-            return;
+            String name = advance();
+            return new Object[] { "CALL", name, new Object[] { smallexpr() } };
         }
         if (getToken1() == LITERAL) {
-            advance();
-            return;
+
+            return new Object[] { "LITERAL", advance() };
         }
         if (getToken1() == '(') {
             advance();
-            expr();
+            Object[] e = expr();
             over(')');
-            return;
+            return e;
         }
         if (getToken1() == IF) {
-            ifexpr();
-            return;
+            return ifexpr();
         }
         if (getToken1() == WHILE) {
             advance();
             over('(');
-            expr();
+            Object[] condition = expr();
             over(')');
-            body();
-            return;
+            Object[] bod = body();
+            return new Object[] { "WHILE", condition, bod };
         }
-        // ATHUGA HVERNIG ENDA SKAL IF SETNINGAR
-        body();
+        return body();
     }
 
     private static Object[] ifexpr() throws Exception {
@@ -166,7 +211,6 @@ public class NanoParser {
         Object[] then = body();
         if (getToken1() == ELSE) {
             over(ELSE);
-            // ATHUGA HVERNIG ENDA SKAL IF SETNINGAR
             if (getToken1() == IF) {
                 return new Object[] { "IF2", cond, then, ifexpr() };
             }
@@ -183,7 +227,7 @@ public class NanoParser {
             over(';');
         }
         over('}');
-        return new Object[] { "BODY", bod };
+        return new Object[] { "BODY", bod.toArray() };
     }
 
     // The symbol table consists of the following two variables.
@@ -207,14 +251,81 @@ public class NanoParser {
         return res;
     }
 
+    static void generateProgram(String filename, Vector<Object[]> funs) {
+        String programname = filename.substring(0, filename.indexOf('.'));
+        System.out.println("\"" + programname + ".mexe\" = main in");
+        System.out.println("!");
+        System.out.println("{{");
+        for (Object[] f : funs) {
+            generateFunction(f);
+        }
+        System.out.println("}}");
+        System.out.println("*");
+        System.out.println("BASIS;");
+    }
+
+    static void generateFunction(Object[] fun) {
+        System.out.println("#\"" + (String) fun[0] + "[f" + (int) fun[1] + "]\" =");
+        System.out.println("[");
+        System.out.println("(MakeVal null)");
+        for (int i = 0; i < (int) fun[2]; i++) {
+            System.out.println("(Push)");
+        }
+        for (Object e : (Object[]) fun[3]) {
+            generateExpr((Object[]) e);
+        }
+        System.out.println("(Return)");
+        System.out.println("];");
+    }
+
+    // All existing labels, i.e. labels the generated
+    // code that we have already produced, should be
+    // of form
+    // _xxxx
+    // where xxxx corresponds to an integer n
+    // such that 0 <= n < nextLab.
+    // So we should update nextLab as we generate
+    // new labels.
+    // The first generated label would be _0, the
+    // next would be _1, and so on.
+    private static int nextLab = 0;
+
+    // Returns a new, previously unused, label.
+    // Useful for control-flow expressions.
+    static String newLabel() {
+        return "_" + (nextLab++);
+    }
+
+    static void generateExpr(Object[] e) {
+        switch ((String) e[0]) {
+            case "WHILE": {
+                String startlab = newLabel();
+                String endlab = newLabel();
+                System.out.println(startlab + ":");
+                generateExpr((Object[]) e[1]);
+                System.out.println("(GoFalse " + endlab + ")");
+                generateExpr((Object[]) e[2]);
+                System.out.println("(Go " + startlab + ")");
+                System.out.println(endlab + ":");
+            }
+            case "LITERAL": {
+                System.out.println("(MakeVal " + (String) e[1] + ")");
+            }
+        }
+    }
+
+    static void generateBody( Object[] bod )
+    {
+		...
+    }
+
     static public void main(String[] args) throws Exception {
         try {
             NanoLexer.startLexer(args[0]);
-            program();
-
+            Vector<Object[]> code = program();
+            generateProgram(args[0], code);
         } catch (Throwable e) {
             System.out.println(e.getMessage());
         }
-        System.out.println("Parsing complete");
     }
 }
