@@ -306,12 +306,12 @@ public class NanoCompiler {
                 break;
             }
             case "FETCH": {
-                System.out.println("(Fetch " + e[1] + ")");
+                System.out.println("(Fetch " + (int) e[1] + ")");
                 break;
             }
             case "STORE": {
                 generateExpr((Object[]) e[2]);
-                System.out.println("(Store " + e[1] + ")");
+                System.out.println("(Store " + (int) e[1] + ")");
                 break;
             }
             case "CALL": {
