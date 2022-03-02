@@ -307,40 +307,46 @@ public class NanoParser {
                 generateExpr((Object[]) e[2]);
                 System.out.println("(Go " + startlab + ")");
                 System.out.println(endlab + ":");
+                break;
             }
             case "LITERAL": {
                 System.out.println("(MakeVal " + (String) e[1] + ")");
-            }
-            case "CALL": {
-                Object[][] args = (Object[][]) (e[2]);
-                int n = args.length;
-                generateExpr(args[0]);
-                for (int i = 1; i < n; i++) {
-                    System.out.println("(Push)");
-                    generateExpr(args[i]);
-                }
-                System.out.println("(Call \"" + (String) e[1] + "[f" + n + "]\" " + n + ")");
+                break;
             }
             case "FETCH": {
-                System.out.println("(Fetch " + (int) e[1] + ")");
+                System.out.println("(Fetch " + e[1] + ")");
+                break;
             }
             case "STORE": {
                 generateExpr((Object[]) e[2]);
-                System.out.println("(Store " + (int) e[1] + ")");
+                System.out.println("(Store " + e[1] + ")");
+                break;
+            }
+            case "CALL": {
+                Object[] args = (Object[]) (e[2]);
+
+                int n = args.length;
+                generateExpr((Object[]) args[0]);
+                for (int i = 1; i < n; i++) {
+                    System.out.println("(Push)");
+                    generateExpr((Object[]) args[i]);
+                }
+                System.out.println("(Call #\"" + (String) e[1] + "[f" + n + "]\" " + n + ")");
+                break;
             }
             case "RETURN": {
                 Object[] expr = (Object[]) e[1];
 
                 switch ((String) expr[0]) {
                     case "CALL": {
-                        Object[][] args = (Object[][]) (expr[2]);
+                        Object[] args = (Object[]) (expr[2]);
                         int n = args.length;
-                        generateExpr(args[0]);
+                        generateExpr((Object[]) args[0]);
                         for (int i = 1; i < n; i++) {
                             System.out.println("(Push)");
-                            generateExpr(args[i]);
+                            generateExpr((Object[]) args[i]);
                         }
-                        System.out.println("(CallR \"" + (String) expr[1] + "[f" + n + "]\" " + n + ")");
+                        System.out.println("(CallR #\"" + (String) expr[1] + "[f" + n + "]\" " + n + ")");
                         break;
                     }
                     case "FETCH": {
@@ -359,6 +365,7 @@ public class NanoParser {
             }
             case "BODY": {
                 generateBody((Object[]) e[1]);
+                break;
             }
             case "IF1": {
                 String lab = newLabel();
@@ -366,6 +373,7 @@ public class NanoParser {
                 System.out.println("(GoFalse " + lab + ")");
                 generateExpr((Object[]) e[2]);
                 System.out.println(lab + ":");
+                break;
             }
             case "IF2": {
                 String elselab = newLabel();
@@ -377,6 +385,7 @@ public class NanoParser {
                 System.out.println(elselab + ":");
                 generateExpr((Object[]) e[3]);
                 System.out.println(endlab + ":");
+                break;
             }
         }
     }

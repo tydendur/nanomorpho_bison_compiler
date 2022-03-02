@@ -37,7 +37,7 @@ f(n)
 
 main()
 {
-	writeln(1:2:3:null);
+	writeln("Hello, world!");
 	writeln("fibo(35)="++fibo(35));
 	writeln("fibo(35)="++f(35));
 	writeln(1==2);
