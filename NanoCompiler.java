@@ -1,6 +1,6 @@
 import java.util.Vector;
 import java.util.HashMap;
-// Höfundur: Jon Gunnar Hannesson & Tristan Freyr Jonsson, 2017-2022
+// Höfundur: Jon Gunnar Hannesson & Tristan Freyr Jonsson, 2022
 
 public class NanoCompiler {
     // Definitions of tokens:
