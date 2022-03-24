@@ -1,5 +1,5 @@
-# Ofansækinn þýðandi
-Ofansækinn þýðandi fyrir NanoMorpho byggt á dæmum eftir Snorra Agnarsson.
+# NanoMorpho þýðandi
+Neðansækinn þýðandi fyrir NanoMorpho byggt á dæmum eftir Snorra Agnarsson.
 
 Einnig fylgir test.nm skrá til að prófa þýðandann. Sjá [leiðbeiningar](#build-and-run-instructions) að neðan.
 Þýðandinn les NanoMorpho skrá og skilar Morpho smalamáli fyrir þá skrá.
