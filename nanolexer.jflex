@@ -16,6 +16,7 @@ import java.io.*;
 
 %public
 %class NanoLexer
+%implements NanoParser.Lexer
 %unicode
 %byaccj
 %line
@@ -23,124 +24,19 @@ import java.io.*;
 
 %{
 
-private static String lexeme1;
-private static String lexeme2;
-private static int token1;
-private static int token2;
-private static NanoLexer lexer;
-private static int line1, column1, line2, column2;
+private static String yylval;
 
-public static void startLexer( String filename ) throws Exception
-{
-	startLexer(new FileReader(filename));
-}
-
-public static void startLexer( Reader r ) throws Exception
-{
-	lexer = new NanoLexer(r);
-	token2 = lexer.yylex();
-	line2 = lexer.yyline;
-	column2 = lexer.yycolumn;
-	advance();
-}
-
-public static String advance() throws Exception
-{
-	String res = lexeme1;
-	token1 = token2;
-	lexeme1 = lexeme2;
-	line1 = line2;
-	column1 = column2;
-	if( token2==0 ) return res;
-	token2 = lexer.yylex();
-	line2 = lexer.yyline;
-	column2 = lexer.yycolumn;
-	return res;
-}
-
-public static int getLine()
-{
-	return line1+1;
-}
-
-public static int getColumn()
-{
-	return column1+1;
-}
-
-public static int getToken1()
-{
-	return token1;
-}
-
-public static int getToken2()
-{
-	return token2;
-}
-
-public static String getLexeme()
-{
-	return lexeme1;
-}
-
-private static void expected( int tok )
-{
-	expected(tokname(tok));
-}
-
-private static void expected( char tok )
-{
-	expected("'"+tok+"'");
-}
-
-public static void expected( String tok )
-{
-	throw new Error("Expected "+tok+", found '"+lexeme1+"' near line "+(line1+1)+", column "+(column1+1));
-}
-
-private static String tokname( int tok )
-{
-	if( tok<1000 ) return ""+(char)tok;
-	switch( tok )
+public String getLVal()
 	{
-	case NanoCompiler.IF:
-		return "if";
-	case NanoCompiler.ELSE:
-		return "else";
-	case NanoCompiler.ELSIF:
-		return "elsif";
-	case NanoCompiler.WHILE:
-		return "while";
-	case NanoCompiler.VAR:
-		return "var";
-	case NanoCompiler.RETURN:
-		return "return";
-	case NanoCompiler.NAME:
-		return "name";
-	case NanoCompiler.OPNAME:
-		return "operation";
-	case NanoCompiler.LITERAL:
-		return "literal";
+		return yylval;
 	}
-	throw new Error();
-}
 
-public static String over( int tok ) throws Exception
-{
-	if( token1!=tok ) expected(tok);
-	String res = lexeme1;
-	advance();
-	return res;
-}
-
-public static String over( char tok ) throws Exception
-{
-	if( token1!=tok ) expected(tok);
-	String res = lexeme1;
-	advance();
-	return res;
-}
-
+public void yyerror( String error )
+	{
+		System.out.println("Error:  "+error);
+		System.out.println("Token:  "+yylval + " near line "+(yyline+1)+", column "+(yycolumn+1));
+		System.exit(1);
+	}
 %}
 
   /* Reglulegar skilgreiningar */
@@ -162,52 +58,78 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
   /* Scanning rules */
 
 {_DELIM} {
-	lexeme2 = yytext();
+	yylval = yytext();
 	return yycharat(0);
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-	lexeme2 = yytext();
-	return NanoCompiler.LITERAL;
+	yylval = yytext();
+	return LITERAL;
 }
 
 "if" {
-	lexeme2 = yytext();
-	return NanoCompiler.IF;
+	yylval = yytext();
+	return IF;
 }
 
 "elsif" {
-	lexeme2 = yytext();
-	return NanoCompiler.ELSIF;
+	yylval = yytext();
+	return ELSIF;
 }
 
 "else" {
-	lexeme2 = yytext();
-	return NanoCompiler.ELSE;
+	yylval = yytext();
+	return ELSE;
 }
 "while" {
-	lexeme2 = yytext();
-	return NanoCompiler.WHILE;
+	yylval = yytext();
+	return WHILE;
 }
 "return" {
-	lexeme2 = yytext();
-	return NanoCompiler.RETURN;
+	yylval = yytext();
+	return RETURN;
 }
 "var" {
-	lexeme2 = yytext();
-	return NanoCompiler.VAR;
+	yylval = yytext();
+	return VAR;
 }
 
 {_NAME} {
-	lexeme2 = yytext();
-	return NanoCompiler.NAME;
+	yylval = yytext();
+	return NAME;
 }
 
 {_OPNAME} {
-	lexeme2 = yytext();
-	return NanoCompiler.OPNAME;
+	yylval = yytext();
+	// TODO spyrja snorra hvad er i gangi herwhat
+	switch( yytext().charAt(0) )
+	{
+	case '^':
+	case '?':
+	case '~':
+		return OP1;
+	case ':':
+		return OP2;
+	case '|':
+		return OP3;
+	case '&':
+		return OP4;
+	case '!':
+	case '=':
+	case '<':
+	case '>':
+		return OP5;
+	case '+':
+	case '-':
+		return OP6;
+	case '*':
+	case '/':
+	case '%':
+		return OP7;
+	default:
+		throw new Error("Invalid operation name");
+	}
 }
-
   /* Comments start with a pound sign. */
 "#".*$ {
 }
@@ -216,6 +138,6 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 }
 
 . {
-	lexeme2 = yytext();
-	return NanoCompiler.ERROR;
+	yylval = yytext();
+	return ERROR;
 }

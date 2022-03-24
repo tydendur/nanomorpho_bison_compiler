@@ -1,247 +1,15 @@
 import java.util.Vector;
+import java.io.FileReader;
 import java.util.HashMap;
 // Höfundur: Jon Gunnar Hannesson & Tristan Freyr Jonsson, 2022
 
 public class NanoCompiler {
-    // Definitions of tokens:
-    final static int ERROR = -1;
-    final static int IF = 1001;
-    final static int ELSIF = 1002;
-    final static int ELSE = 1003;
-    final static int NAME = 1004;
-    final static int OPNAME = 1005;
-    final static int LITERAL = 1006;
-    final static int RETURN = 1007;
-    final static int WHILE = 1008;
-    final static int VAR = 1009;
-
-    private static String advance() throws Exception {
-        return NanoLexer.advance();
-    }
-
-    private static String over(int tok) throws Exception {
-        return NanoLexer.over(tok);
-    }
-
-    private static String over(char tok) throws Exception {
-        return NanoLexer.over(tok);
-    }
-
-    private static int getToken1() {
-        return NanoLexer.getToken1();
-    }
-
-    private static String getLexeme() {
-        return NanoLexer.getLexeme();
-    }
-
-    private static int getToken2() {
-        return NanoLexer.getToken2();
-    }
-
-    private static Vector<Object[]> program() throws Exception {
-        Vector<Object[]> retVal = new Vector<Object[]>();
-        retVal.add(function());
-        while (getToken1() != 0) {
-            retVal.add(function());
-        }
-        return retVal;
-    }
-
-    private static Object[] function() throws Exception {
-        varCount = 0;
-        varTable = new HashMap<String, Integer>();
-        String name = over(NAME);
-        over('(');
-        if (getToken1() == NAME) {
-            addVar(over(NAME));
-            while (getToken1() == ',') {
-                advance();
-                addVar(over(NAME));
-            }
-        }
-        over(')');
-        int parCount = varCount;
-        over('{');
-        while (getToken1() == VAR) {
-            decl();
-            over(';');
-        }
-        Vector<Object[]> exprVec = new Vector<Object[]>();
-
-        while (getToken1() != '}') {
-            exprVec.add(expr());
-            over(';');
-        }
-        over('}');
-        return new Object[] { name, parCount, varCount - parCount, exprVec.toArray() };
-    }
-
-    private static void decl() throws Exception {
-        over(VAR);
-        addVar(over(NAME));
-        while (getToken1() == ',') {
-            advance();
-            addVar(over(NAME));
-        }
-    }
-
-    private static Object[] expr() throws Exception {
-        if (getToken1() == RETURN) {
-            advance();
-            return new Object[] { "RETURN", expr() };
-        }
-        if (getToken1() == NAME && getToken2() == '=') {
-            int pos = findVar(advance());
-            advance();
-            return new Object[] { "STORE", pos, expr() };
-        }
-        return binopexpr(1);
-    }
-
-    static Object[] binopexpr(int pri) throws Exception {
-        if (pri > 7) {
-            return smallexpr();
-        } else if (pri == 2) {
-            Object[] e = binopexpr(3);
-            if (getToken1() == OPNAME && priority(getLexeme()) == 2) {
-                String op = advance();
-                e = new Object[] { "CALL", op, new Object[] { e, binopexpr(2) } };
-            }
-            return e;
-        } else {
-            Object[] e = binopexpr(pri + 1);
-            while (getToken1() == OPNAME && priority(getLexeme()) == pri) {
-                String op = advance();
-                e = new Object[] { "CALL", op, new Object[] { e, binopexpr(pri + 1) } };
-            }
-            return e;
-        }
-    }
-
-    static int priority(String opname) {
-        switch (opname.charAt(0)) {
-            case '^':
-            case '?':
-            case '~':
-                return 1;
-            case ':':
-                return 2;
-            case '|':
-                return 3;
-            case '&':
-                return 4;
-            case '!':
-            case '=':
-            case '<':
-            case '>':
-                return 5;
-            case '+':
-            case '-':
-                return 6;
-            case '*':
-            case '/':
-            case '%':
-                return 7;
-            default:
-                throw new Error("Invalid opname");
-        }
-    }
-
-    private static Object[] smallexpr() throws Exception {
-        if (getToken1() == NAME && getToken2() == '(') {
-            String name = advance();
-            advance();
-            Vector<Object[]> args = new Vector<Object[]>();
-            if (getToken1() != ')') {
-                args.add(expr());
-                while (getToken1() == ',') {
-                    advance();
-                    args.add(expr());
-                }
-            }
-            over(')');
-            return new Object[] { "CALL", name, args.toArray() };
-        }
-        if (getToken1() == NAME) {
-            int pos = findVar(over(NAME));
-            return new Object[] { "FETCH", pos };
-        }
-        if (getToken1() == OPNAME) {
-            String name = advance();
-            return new Object[] { "CALL", name, new Object[] { smallexpr() } };
-        }
-        if (getToken1() == LITERAL) {
-
-            return new Object[] { "LITERAL", advance() };
-        }
-        if (getToken1() == '(') {
-            advance();
-            Object[] e = expr();
-            over(')');
-            return e;
-        }
-        if (getToken1() == IF) {
-            return ifexpr();
-        }
-        if (getToken1() == WHILE) {
-            advance();
-            over('(');
-            Object[] condition = expr();
-            over(')');
-            Object[] bod = body();
-            return new Object[] { "WHILE", condition, bod };
-        }
-        return body();
-    }
-
-    private static Object[] ifexpr() throws Exception {
-        over(IF);
-        over('(');
-        Object[] cond = expr();
-        over(')');
-        Object[] then = body();
-        if (getToken1() == ELSE) {
-            over(ELSE);
-            if (getToken1() == IF) {
-                return new Object[] { "IF2", cond, then, ifexpr() };
-            }
-            return new Object[] { "IF2", cond, then, body() };
-        }
-        return new Object[] { "IF1", cond, then };
-    }
-
-    private static Object[] body() throws Exception {
-        over('{');
-        Vector<Object> bod = new Vector<Object>();
-        while (getToken1() != '}') {
-            bod.add(expr());
-            over(';');
-        }
-        over('}');
-        return new Object[] { "BODY", bod.toArray() };
-    }
+    // name of program
+    static String name;
 
     // The symbol table consists of the following two variables.
-    private static int varCount;
-    private static HashMap<String, Integer> varTable;
-
-    // Adds a new variable to the symbol table.
-    // Throws Error if the variable already exists.
-    private static void addVar(String name) {
-        if (varTable.get(name) != null)
-            throw new Error("Variable " + name + " already exists");
-        varTable.put(name, varCount++);
-    }
-
-    // Finds the location of an existing variable.
-    // Throws Error if the variable does not exist.
-    private static int findVar(String name) {
-        Integer res = varTable.get(name);
-        if (res == null)
-            throw new Error("Variable " + name + " does not exist");
-        return res;
-    }
+    int varCount;
+    HashMap<String, Integer> varTable;
 
     static void generateProgram(String filename, Vector<Object[]> funs) {
         String programname = filename.substring(0, filename.indexOf('.'));
@@ -390,9 +158,10 @@ public class NanoCompiler {
 
     static public void main(String[] args) throws Exception {
         try {
-            NanoLexer.startLexer(args[0]);
-            Vector<Object[]> code = program();
-            generateProgram(args[0], code);
+            NanoLexer lexer = new NanoLexer(new FileReader(args[0]));
+            NanoParser parser = new NanoParser(lexer);
+            name = args[0];
+            parser.parse();
         } catch (Throwable e) {
             System.out.println(e.getMessage());
         }
