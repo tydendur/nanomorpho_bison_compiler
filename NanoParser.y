@@ -102,6 +102,7 @@ expr
 	| 	expr OP5 expr	{$$ = new Object[] {"CALL", $OP5, new Object[]{$1, $3}};}
 	| 	expr OP6 expr	{$$ = new Object[] {"CALL", $OP6, new Object[]{$1, $3}};}
 	| 	expr OP7 expr	{$$ = new Object[] {"CALL", $OP7, new Object[]{$1, $3}};}
+	| 	'(' expr ')'	{$$ = $2;}
 	| 	NAME '(' args ')' {$$ = new Object[] {"CALL", $NAME, $args.toArray()};}
 	| 	IF '(' expr ')' body {$$ = new Object[]{"IF1", $3, $body};}
 	| 	IF '(' expr ')' body nonemptyifrest {$$ = new Object[]{"IF2", $3, $body, $nonemptyifrest};}

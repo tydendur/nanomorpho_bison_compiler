@@ -40,5 +40,5 @@ main()
 	writeln("Hello, world!");
 	writeln("fibo(35)="++fibo(35));
 	writeln("fibo(35)="++f(35));
-	writeln(1==2);
+	writeln(((1==2)));
 }

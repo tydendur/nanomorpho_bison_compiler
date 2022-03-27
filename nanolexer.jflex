@@ -10,8 +10,6 @@
 		make test
  */
 
-import java.io.*;
-
 %%
 
 %public
